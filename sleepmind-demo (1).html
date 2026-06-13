@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SleepMind · 让睡眠重新可控</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300&family=Inter:wght@400;500&family=Noto+Serif+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c0e22;
+    --ink-2:#12152e;
+    --dusk:#1b1f3f;
+    --moon:#efe9d8;
+    --moon-soft:#cfcbe0;
+    --haze:#9a9ac0;
+    --haze-dim:#6f7099;
+    --sage:#93c9b4;
+    --sage-deep:#5fae93;
+    --glass:rgba(255,255,255,.045);
+    --glass-2:rgba(255,255,255,.07);
+    --line:rgba(255,255,255,.09);
+    --line-soft:rgba(255,255,255,.06);
+    --serif:"Spectral","Noto Serif SC",Georgia,"Songti SC",serif;
+    --sans:"Inter","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    --r:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--sans);
+    background:var(--ink);
+    color:var(--moon);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  /* ambient page wash */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(120% 80% at 50% -10%, #20264f 0%, var(--ink-2) 42%, var(--ink) 100%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(60% 50% at 80% 110%, rgba(95,174,147,.10), transparent 70%);
+  }
+  ::selection{background:rgba(147,201,180,.3)}
+  h1,h2,h3{font-family:var(--serif);font-weight:400;letter-spacing:.01em}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+
+  /* ---------- nav ---------- */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 32px;transition:background .5s,backdrop-filter .5s,padding .5s,border-color .5s;
+    border-bottom:1px solid transparent;
+  }
+  nav.scrolled{background:rgba(12,14,34,.72);backdrop-filter:blur(14px);padding:14px 32px;border-bottom:1px solid var(--line-soft)}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:21px;letter-spacing:.02em}
+  .brand .orbmark{width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#fff,var(--moon) 35%,#b9b4c9 75%,#6c6a86);box-shadow:0 0 14px rgba(239,233,216,.55)}
+  .navlinks{display:flex;gap:30px}
+  .navlinks a{font-size:14px;color:var(--haze);transition:color .3s;position:relative}
+  .navlinks a:hover{color:var(--moon)}
+  .navlinks a::after{content:"";position:absolute;left:0;bottom:-5px;width:0;height:1px;background:var(--sage);transition:width .35s}
+  .navlinks a:hover::after{width:100%}
+  @media(max-width:720px){.navlinks{display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 28px 80px}
+  #stars-hero{position:absolute;inset:0;z-index:0;pointer-events:none}
+  .breath{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:min(78vw,560px);aspect-ratio:1;border-radius:50%;z-index:0;pointer-events:none;
+    background:radial-gradient(circle, rgba(147,201,180,.16) 0%, rgba(123,140,210,.10) 38%, transparent 66%);
+    animation:breathe 11s ease-in-out infinite;
+  }
+  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(.9);opacity:.7}50%{transform:translate(-50%,-50%) scale(1.12);opacity:1}}
+  .hero-inner{position:relative;z-index:2;max-width:760px}
+  .eyebrow{font-size:13px;letter-spacing:.34em;text-transform:uppercase;color:var(--sage);margin-bottom:26px;font-family:var(--sans)}
+  .hero h1{font-size:clamp(38px,6.6vw,76px);line-height:1.12;font-weight:300;letter-spacing:.005em}
+  .hero h1 em{font-style:italic;color:var(--moon-soft)}
+  .hero p{margin:28px auto 0;max-width:520px;color:var(--haze);font-size:17px}
+  .scrollcue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:2;color:var(--haze-dim);font-size:12px;letter-spacing:.22em;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .scrollcue .ln{width:1px;height:42px;background:linear-gradient(var(--haze-dim),transparent);animation:drop 2.4s ease-in-out infinite}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}50.01%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+  /* ---------- generic section ---------- */
+  section{position:relative;z-index:2}
+  .sec-pad{padding:120px 0}
+  .sec-head{max-width:620px;margin-bottom:54px}
+  .label{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--sage);font-family:var(--sans);margin-bottom:18px}
+  .sec-head h2{font-size:clamp(28px,4.2vw,44px);font-weight:300;line-height:1.2}
+  .sec-head p{margin-top:18px;color:var(--haze);font-size:16px}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity 1s ease,transform 1s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- tonight plan ---------- */
+  .plan{
+    display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:stretch;
+  }
+  @media(max-width:780px){.plan{grid-template-columns:1fr}}
+  .card{
+    background:var(--glass);border:1px solid var(--line);border-radius:var(--r);
+    backdrop-filter:blur(10px);padding:30px 32px;
+  }
+  .plan .greet{color:var(--haze);font-size:14px;margin-bottom:6px}
+  .plan h3{font-size:26px;font-weight:300;margin-bottom:20px}
+  .insight{display:flex;gap:13px;align-items:flex-start;background:rgba(186,117,23,.10);border:1px solid rgba(239,159,39,.22);border-radius:14px;padding:14px 16px;margin-bottom:22px}
+  .insight .ic{color:#f0b34b;flex:none;margin-top:2px}
+  .insight p{color:#e8c98c;font-size:14px;line-height:1.6;font-family:var(--sans)}
+  .plansteps{list-style:none;display:flex;flex-direction:column;gap:14px}
+  .plansteps li{display:flex;align-items:center;gap:14px;font-size:14px;color:var(--moon-soft)}
+  .plansteps .t{font-family:var(--serif);font-size:15px;color:var(--sage);min-width:54px}
+  .plansteps .dot{width:7px;height:7px;border-radius:50%;background:var(--sage-deep);flex:none}
+  .ringcard{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .ring{position:relative;width:170px;height:170px;margin-bottom:18px}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .num{font-family:var(--serif);font-size:46px;line-height:1;color:var(--moon)}
+  .ring .lab{font-size:12px;letter-spacing:.18em;color:var(--haze);margin-top:7px;text-transform:uppercase}
+  .ringcard .sub{color:var(--haze);font-size:13px}
+
+  /* ---------- soundscape (signature) ---------- */
+  .stage{position:relative;border-radius:26px;overflow:hidden;min-height:640px;border:1px solid var(--line);isolation:isolate}
+  .scene{position:absolute;inset:0;opacity:0;transition:opacity 1.4s ease;z-index:0}
+  .scene.on{opacity:1}
+  .scene .sky{position:absolute;inset:0}
+  .scene .sil{position:absolute;left:0;right:0;bottom:0;width:100%;display:block}
+  .scrim{position:absolute;inset:0;z-index:3;pointer-events:none;
+    background:linear-gradient(180deg,rgba(8,9,22,.34) 0%,transparent 26%,transparent 46%,rgba(8,9,22,.62) 88%,rgba(8,9,22,.82) 100%)}
+  .moon{position:absolute;border-radius:50%;background:radial-gradient(circle at 36% 32%,#fff 0%,#f3ecd6 30%,#d9d2bd 70%,#b7b09a 100%);box-shadow:0 0 60px rgba(243,236,214,.4)}
+
+  /* forest */
+  .sky-forest{background:linear-gradient(180deg,#16382c 0%,#123026 40%,#0c211b 100%)}
+  .sky-forest .haze{position:absolute;inset:0;background:radial-gradient(70% 50% at 30% 20%,rgba(180,220,200,.10),transparent 60%)}
+  /* ocean */
+  .sky-ocean{background:linear-gradient(180deg,#1d2b50 0%,#16244a 38%,#0c1730 72%,#0a1326 100%)}
+  .ocean-moonpath{position:absolute;bottom:0;width:120px;left:50%;transform:translateX(-50%);height:46%;
+    background:linear-gradient(180deg,rgba(243,236,214,.5),rgba(243,236,214,0));filter:blur(7px);opacity:.5}
+  /* rain */
+  .sky-rain{background:linear-gradient(180deg,#2b303d 0%,#222632 45%,#171a24 100%)}
+  .cloud{position:absolute;border-radius:50%;background:#3b4252;filter:blur(22px);opacity:.7}
+  /* night */
+  .sky-night{background:linear-gradient(180deg,#0b1030 0%,#0a0d28 45%,#070a1c 100%)}
+
+  .particles{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+  .firefly{position:absolute;width:4px;height:4px;border-radius:50%;background:#ffd98a;box-shadow:0 0 8px 2px rgba(255,217,138,.8)}
+  .raindrop{position:absolute;width:1px;background:linear-gradient(rgba(190,206,225,0),rgba(190,206,225,.55));top:-12%}
+  .twinkle{position:absolute;border-radius:50%;background:#fff}
+
+  .stage-content{position:relative;z-index:4;min-height:640px;display:flex;flex-direction:column;justify-content:space-between;padding:40px}
+  .stage-top{max-width:440px}
+  .stage-top .label{color:var(--sage)}
+  .stage-top h3{font-size:clamp(26px,3.4vw,38px);font-weight:300;line-height:1.18}
+  .stage-top p{margin-top:14px;color:rgba(231,231,247,.82);font-size:15px}
+  .scene-name{font-family:var(--serif);font-style:italic}
+
+  .player{background:rgba(10,11,24,.42);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(16px);border-radius:20px;padding:20px 22px}
+  .picker{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+  .chip{display:flex;align-items:center;gap:9px;padding:10px 16px;border-radius:40px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:rgba(231,231,247,.8);font-size:14px;cursor:pointer;transition:.3s;font-family:var(--sans)}
+  .chip:hover{border-color:rgba(255,255,255,.34);color:#fff}
+  .chip.on{background:rgba(147,201,180,.16);border-color:var(--sage);color:#eafdf5}
+  .chip .gl{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.6}
+  .controls{display:flex;align-items:center;gap:18px}
+  .playbtn{width:54px;height:54px;border-radius:50%;border:1px solid var(--sage);background:rgba(147,201,180,.14);color:#eafdf5;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;transition:.3s}
+  .playbtn:hover{background:rgba(147,201,180,.26)}
+  .playbtn svg{width:22px;height:22px}
+  .nowblock{flex:1;min-width:0}
+  .nowlabel{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--haze);margin-bottom:5px}
+  .nowname{font-family:var(--serif);font-size:19px;color:#fff}
+  .hr-chip{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(231,231,247,.78);white-space:nowrap}
+  .hr-dot{width:9px;height:9px;border-radius:50%;background:var(--sage);animation:hb 1.6s ease-in-out infinite}
+  @keyframes hb{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.78)}}
+  .volrow{display:flex;align-items:center;gap:12px;margin-top:18px;color:var(--haze)}
+  .volrow svg{width:18px;height:18px;flex:none}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:3px;border-radius:3px;background:rgba(255,255,255,.18);width:100%;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--sage);border:0}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radius:50%;background:var(--sage)}
+  .audio-note{font-size:11.5px;color:var(--haze-dim);margin-top:14px;letter-spacing:.02em}
+
+  /* ---------- library ---------- */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  .lib{padding:26px 26px 24px;cursor:default;transition:transform .5s,border-color .5s}
+  .lib:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.2)}
+  .lib .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .lib .ic{width:42px;height:42px;border-radius:12px;background:rgba(147,201,180,.12);display:flex;align-items:center;justify-content:center;color:var(--sage)}
+  .lib .ic svg{width:21px;height:21px}
+  .tag{font-size:11px;letter-spacing:.04em;padding:4px 10px;border-radius:30px;border:1px solid var(--line);color:var(--haze);font-family:var(--sans)}
+  .tag.ai{color:#a8b6f0;border-color:rgba(123,140,210,.4);background:rgba(123,140,210,.1)}
+  .lib h4{font-family:var(--serif);font-size:19px;font-weight:400;margin-bottom:7px}
+  .lib .d{color:var(--haze);font-size:13.5px;min-height:38px}
+  .lib .eff{display:flex;align-items:center;gap:7px;margin-top:16px;font-size:13px;color:var(--sage);font-family:var(--sans)}
+  .lib .eff svg{width:15px;height:15px}
+
+  /* ---------- sleep dashboard ---------- */
+  .sleepgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:780px){.sleepgrid{grid-template-columns:1fr}}
+  .stages{margin-top:8px}
+  .stagebar{display:flex;height:80px;gap:4px;align-items:flex-end;margin:22px 0 14px}
+  .stagebar .seg{flex:1;border-radius:6px 6px 3px 3px;opacity:.9}
+  .stagelegend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--haze)}
+  .stagelegend span{display:flex;align-items:center;gap:7px}
+  .stagelegend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .fingerprint .row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-soft);font-size:14px}
+  .fingerprint .row:last-child{border-bottom:0}
+  .fingerprint .row .k{color:var(--moon-soft)}
+  .fingerprint .row .v{color:var(--haze);font-size:13px}
+  .fingerprint .row .v.good{color:var(--sage)}
+  .fingerprint .row .v.bad{color:#e89a8a}
+
+  /* ---------- footer ---------- */
+  footer{position:relative;z-index:2;text-align:center;padding:90px 28px 60px;border-top:1px solid var(--line-soft);margin-top:40px}
+  footer .fbrand{font-family:var(--serif);font-size:30px;font-weight:300;margin-bottom:14px}
+  footer p{color:var(--haze-dim);font-size:13px}
+  footer .tag2{color:var(--haze);font-size:15px;max-width:420px;margin:0 auto 26px;font-family:var(--serif);font-style:italic}
+
+  /* ---------- ring presence ---------- */
+  .ringpill{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--haze);font-family:var(--sans);padding:7px 13px;border:1px solid var(--line);border-radius:30px;background:var(--glass)}
+  .rdot{width:7px;height:7px;border-radius:50%;background:var(--sage);box-shadow:0 0 8px var(--sage);animation:hb 2.4s ease-in-out infinite;flex:none}
+  @media(max-width:720px){.ringpill{font-size:11px;padding:6px 10px}}
+  .ringsync{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sage);margin-bottom:12px;font-family:var(--sans)}
+
+  /* ---------- toggles ---------- */
+  .tg{position:relative;width:42px;height:24px;border-radius:14px;background:rgba(255,255,255,.16);cursor:pointer;transition:background .3s;flex:none}
+  .tg.on{background:var(--sage-deep)}
+  .tg::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .3s}
+  .tg.on::after{transform:translateX(18px)}
+  .tgrow{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 0;border-bottom:1px solid var(--line-soft)}
+  .tgrow:last-child{border-bottom:0}
+  .tgrow .k{font-size:14px;color:var(--moon-soft)}
+  .tgrow .k small{display:block;color:var(--haze);font-size:12px;margin-top:3px}
+
+  /* ---------- alarm ---------- */
+  .alarmgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:780px){.alarmgrid{grid-template-columns:1fr}}
+  .clockface{display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center}
+  .ringIcon{width:88px;height:88px;margin:0 0 16px}
+  .ringIcon.buzz{animation:buzz .1s linear 0s 18}
+  @keyframes buzz{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(-2px,1px) rotate(-3deg)}50%{transform:translate(2px,-1px) rotate(3deg)}75%{transform:translate(-1px,-1px) rotate(-2deg)}100%{transform:translate(0,0)}}
+  .bigtime{font-family:var(--serif);font-size:62px;font-weight:300;line-height:1}
+  .bigtime input{font:inherit;color:inherit;background:none;border:0;text-align:center;width:210px}
+  .bigtime input::-webkit-calendar-picker-indicator{filter:invert(.75);opacity:.45;cursor:pointer}
+  .clocksub{color:var(--haze);font-size:13px;margin-top:12px;max-width:280px}
+  .btn{display:inline-flex;align-items:center;gap:9px;padding:12px 20px;border-radius:40px;border:1px solid var(--sage);background:rgba(147,201,180,.12);color:#eafdf5;font-size:14px;font-family:var(--sans);cursor:pointer;transition:.3s}
+  .btn:hover{background:rgba(147,201,180,.24)}
+  .btn svg{width:17px;height:17px}
+
+  /* ---------- reminders ---------- */
+  .remlist{list-style:none;display:flex;flex-direction:column;gap:10px;margin:6px 0 18px}
+  .remlist li{display:flex;align-items:center;gap:13px;background:var(--glass);border:1px solid var(--line-soft);border-radius:12px;padding:13px 15px;font-size:14px;color:var(--moon-soft)}
+  .remlist .ck{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--sage-deep);flex:none;display:flex;align-items:center;justify-content:center;color:var(--sage);cursor:pointer}
+  .remlist .ck svg{width:12px;height:12px;opacity:0;transition:.2s}
+  .remlist li.done .ck svg{opacity:1}
+  .remlist li.done .txt{text-decoration:line-through;color:var(--haze-dim)}
+  .remlist .txt{flex:1}
+  .remlist .del{color:var(--haze-dim);cursor:pointer;font-size:19px;line-height:1;background:none;border:0;padding:0 2px}
+  .remlist .del:hover{color:#e89a8a}
+  .reminput{display:flex;gap:10px}
+  .reminput input{flex:1;background:var(--glass);border:1px solid var(--line);border-radius:12px;padding:12px 15px;color:var(--moon);font:14px var(--sans)}
+  .reminput input::placeholder{color:var(--haze-dim)}
+  .addbtn{border:1px solid var(--line);background:var(--glass-2);color:var(--moon);border-radius:12px;padding:0 18px;cursor:pointer;font-size:22px;line-height:1}
+  .addbtn:hover{border-color:var(--sage)}
+
+  /* ---------- week ---------- */
+  .weekchart{display:flex;align-items:flex-end;gap:10px;height:170px;margin:14px 0 8px}
+  .weekchart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+  .weekchart .bar{width:100%;max-width:36px;border-radius:7px 7px 4px 4px;background:linear-gradient(180deg,#6fbfa4,#7b8cd2);transition:height 1.1s cubic-bezier(.2,.7,.2,1)}
+  .weekchart .dy{font-size:12px;color:var(--haze)}
+  .weekchart .hh{font-size:11px;color:var(--haze-dim)}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:6px}
+  @media(max-width:560px){.metrics{grid-template-columns:1fr 1fr}}
+  .metric{background:var(--glass);border:1px solid var(--line-soft);border-radius:14px;padding:16px}
+  .metric .ml{font-size:12px;color:var(--haze);margin-bottom:9px}
+  .metric .mv{font-family:var(--serif);font-size:25px;font-weight:300}
+  .metric .md{font-size:12px;margin-top:7px;display:flex;align-items:center;gap:4px}
+  .metric .md.up{color:var(--sage)}
+  .metric .md.down{color:#e6b27a}
+  .summary{display:flex;gap:14px;align-items:flex-start;background:rgba(147,201,180,.08);border:1px solid rgba(147,201,180,.22);border-radius:14px;padding:16px 18px;margin-top:22px}
+  .summary .ic{color:var(--sage);flex:none;margin-top:2px}
+  .summary p{font-size:14px;color:#cfe9df;font-family:var(--sans);line-height:1.7}
+
+  /* ---------- peer compare ---------- */
+  .peer .prow{margin:20px 0}
+  .peer .plabel{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--moon-soft);margin-bottom:10px}
+  .peer .ptrack{position:relative;height:10px;border-radius:6px;background:rgba(255,255,255,.1)}
+  .peer .pfill{position:absolute;left:0;top:0;height:100%;border-radius:6px;background:linear-gradient(90deg,#5fae93,#7b8cd2)}
+  .peer .pavg{position:absolute;top:-5px;width:2px;height:20px;background:var(--moon);opacity:.65}
+  .peer .pnote{font-size:12px;color:var(--haze);margin-top:9px}
+  .peer .rank{font-family:var(--serif);font-size:15px;color:var(--sage)}
+
+  /* ---------- community ---------- */
+  .compost{display:flex;flex-direction:column;gap:13px;background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:26px}
+  .compost textarea{width:100%;min-height:66px;resize:vertical;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:13px 15px;color:var(--moon);font:14px/1.6 var(--sans)}
+  .compost textarea::placeholder{color:var(--haze-dim)}
+  .compost .pf{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  .compost .tags{display:flex;gap:8px}
+  .ptag{font-size:12px;padding:6px 13px;border-radius:20px;border:1px solid var(--line);color:var(--haze);cursor:pointer;transition:.2s}
+  .ptag.on{border-color:var(--sage);color:var(--sage);background:rgba(147,201,180,.1)}
+  .msgs{display:flex;flex-direction:column;gap:14px}
+  .msg{background:var(--glass);border:1px solid var(--line-soft);border-radius:16px;padding:18px 20px}
+  .msg .mh{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+  .msg .av{width:34px;height:34px;border-radius:50%;background:rgba(123,140,210,.18);color:#a8b6f0;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none;font-family:var(--serif)}
+  .msg .who{font-size:14px;color:var(--moon-soft)}
+  .msg .meta{font-size:12px;color:var(--haze-dim)}
+  .msg .chiptag{margin-left:auto;font-size:11px;padding:3px 11px;border-radius:20px;border:1px solid var(--line)}
+  .msg .chiptag.tip{color:var(--sage);border-color:rgba(147,201,180,.4)}
+  .msg .chiptag.talk{color:#a8b6f0;border-color:rgba(123,140,210,.4)}
+  .msg .body{font-size:14.5px;color:var(--moon-soft);line-height:1.75}
+  .msg .foot{margin-top:13px}
+  .likebtn{display:inline-flex;align-items:center;gap:7px;background:none;border:1px solid var(--line);color:var(--haze);border-radius:20px;padding:6px 13px;font-size:13px;cursor:pointer;font-family:var(--sans);transition:.2s}
+  .likebtn:hover{border-color:var(--sage);color:var(--sage)}
+  .likebtn.liked{color:var(--sage);border-color:rgba(147,201,180,.4);background:rgba(147,201,180,.08)}
+  .likebtn svg{width:14px;height:14px}
+
+  /* ---------- toast ---------- */
+  .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);background:rgba(18,21,46,.95);border:1px solid var(--line);backdrop-filter:blur(14px);color:var(--moon);padding:13px 20px;border-radius:40px;font-size:14px;z-index:99;opacity:0;pointer-events:none;transition:.4s;display:flex;align-items:center;gap:10px;max-width:88vw}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast .rdot{animation:hb 1s ease-in-out infinite}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:opacity .4s ease!important}
+    .reveal{opacity:1!important;transform:none!important}
+  }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="brand"><span class="orbmark"></span>SleepMind</div>
+  <div class="navlinks">
+    <a href="#tonight">今晚</a>
+    <a href="#sounds">声景</a>
+    <a href="#alarm">闹钟</a>
+    <a href="#library">内容</a>
+    <a href="#sleep">记录</a>
+    <a href="#community">社区</a>
+  </div>
+  <div class="ringpill"><span class="rdot"></span>指环已连接 · 87%</div>
+</nav>
+
+<header class="hero" id="home">
+  <canvas id="stars-hero"></canvas>
+  <div class="breath"></div>
+  <div class="hero-inner">
+    <div class="eyebrow">AI 睡眠教练</div>
+    <h1>睡眠，<em>重新</em><br>变得可以调整</h1>
+    <p>SleepMind 不只告诉你昨晚睡得怎样，而是在白天读懂你的身体，为今晚开出一份只属于你的处方。</p>
+  </div>
+  <div class="scrollcue"><span>向下</span><span class="ln"></span></div>
+</header>
+
+<section class="sec-pad" id="tonight">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="label">今晚方案</div>
+      <h2>晚安之前，先听身体说话</h2>
+      <p>结合你白天的咖啡、光照、压力与心率，SleepMind 推算出今晚最值得做的几件小事。</p>
+    </div>
+    <div class="plan">
+      <div class="card reveal">
+        <div class="ringsync"><span class="rdot"></span>来自你的指环 · 今晨 6:42 自动同步</div>
+        <div class="greet">晚上好，林</div>
+        <h3>助你今晚多睡 <span style="color:var(--sage)">30 分钟</span>深睡</h3>
+        <div class="insight">
+          <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span>
+          <p>今天你的压力峰值偏高，且 15:10 喝了咖啡 —— 建议提前 30 分钟开始放松，22:40 调暗灯光。</p>
+        </div>
+        <ul class="plansteps">
+          <li><span class="t">22:40</span><span class="dot"></span>调暗卧室灯光，开启「雨夜」声景</li>
+          <li><span class="t">22:50</span><span class="dot"></span>4 分钟呼吸引导，跟随指环震动节奏</li>
+          <li><span class="t">23:10</span><span class="dot"></span>你的最佳入睡窗口</li>
+        </ul>
+      </div>
+      <div class="card ringcard reveal">
+        <div class="ring">
+          <svg width="170" height="170" viewBox="0 0 170 170">
+            <circle cx="85" cy="85" r="72" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+            <circle cx="85" cy="85" r="72" fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-dasharray="452" stroke-dashoffset="113"/>
+            <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#93c9b4"/><stop offset="1" stop-color="#7b8cd2"/></linearGradient></defs>
+          </svg>
+          <div class="val"><div class="num">75</div><div class="lab">就绪度</div></div>
+        </div>
+        <div class="sub">比你的四周平均高 6 分 · 今晚有机会更好</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec-pad" id="sounds">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="label">声景</div>
+      <h2>选一处自然，让心率慢下来</h2>
+      <p>每一段声音都由设备实时合成，并随你的心率变缓、淡出。选择下面的场景，世界会跟着安静下来。</p>
+    </div>
+
+    <div class="stage reveal">
+      <!-- FOREST -->
+      <div class="scene on" data-scene="forest">
+        <div class="sky sky-forest"><div class="haze"></div></div>
+        <div class="moon" style="width:78px;height:78px;top:64px;right:90px;opacity:.85"></div>
+        <svg class="sil" viewBox="0 0 1200 360" preserveAspectRatio="none" height="58%">
+          <path d="M0 360 L0 220 Q40 160 70 210 L80 150 Q110 90 140 160 L150 120 Q180 60 210 150 L230 200 Q260 130 290 200 L300 150 Q340 80 370 170 L390 210 Q430 120 460 210 L480 160 Q520 90 550 190 L580 220 Q620 140 650 220 L670 170 Q710 90 740 200 L770 230 Q810 150 840 230 L860 180 Q900 100 930 210 L960 240 Q1000 150 1030 230 L1060 190 Q1100 110 1130 220 L1160 250 Q1185 200 1200 240 L1200 360 Z" fill="#08160f"/>
+        </svg>
+        <svg class="sil" viewBox="0 0 1200 220" preserveAspectRatio="none" height="34%">
+          <path d="M0 220 L0 130 Q60 60 110 140 L150 90 Q210 30 250 130 L300 80 Q360 20 400 140 L450 90 Q520 30 560 150 L620 100 Q690 30 730 150 L790 100 Q860 30 900 150 L960 110 Q1030 40 1080 150 L1140 110 Q1180 70 1200 130 L1200 220 Z" fill="#040d09"/>
+        </svg>
+        <div class="particles" data-fx="firefly"></div>
+      </div>
+
+      <!-- OCEAN -->
+      <div class="scene" data-scene="ocean">
+        <div class="sky sky-ocean"></div>
+        <div class="moon" style="width:64px;height:64px;top:80px;left:50%;transform:translateX(-50%);opacity:.92"></div>
+        <div class="ocean-moonpath"></div>
+        <svg class="sil" viewBox="0 0 1200 240" preserveAspectRatio="none" height="42%">
+          <path d="M0 60 Q150 30 300 60 T600 60 T900 60 T1200 60 L1200 240 L0 240 Z" fill="#0c1a36" opacity=".9"/>
+          <path d="M0 110 Q150 80 300 110 T600 110 T900 110 T1200 110 L1200 240 L0 240 Z" fill="#0a1428"/>
+          <path d="M0 165 Q150 138 300 165 T600 165 T900 165 T1200 165 L1200 240 L0 240 Z" fill="#080f1f"/>
+        </svg>
+      </div>
+
+      <!-- RAIN -->
+      <div class="scene" data-scene="rain">
+        <div class="sky sky-rain"></div>
+        <div class="cloud" style="width:340px;height:130px;top:40px;left:8%"></div>
+        <div class="cloud" style="width:420px;height:150px;top:20px;left:42%"></div>
+        <div class="cloud" style="width:300px;height:120px;top:70px;right:6%"></div>
+        <div class="particles" data-fx="rain"></div>
+        <svg class="sil" viewBox="0 0 1200 180" preserveAspectRatio="none" height="26%">
+          <path d="M0 180 L0 110 L120 110 L120 70 L260 70 L260 120 L420 120 L420 60 L560 60 L560 120 L720 120 L720 80 L880 80 L880 120 L1020 120 L1020 90 L1200 90 L1200 180 Z" fill="#11141d"/>
+        </svg>
+      </div>
+
+      <!-- NIGHT -->
+      <div class="scene" data-scene="night">
+        <div class="sky sky-night"></div>
+        <div class="particles" data-fx="twinkle"></div>
+        <div class="moon" style="width:70px;height:70px;top:70px;right:120px;opacity:.95"></div>
+        <svg class="sil" viewBox="0 0 1200 280" preserveAspectRatio="none" height="46%">
+          <path d="M0 280 L0 170 L180 80 L340 180 L520 60 L700 190 L880 90 L1060 200 L1200 130 L1200 280 Z" fill="#0a0e22"/>
+          <path d="M0 280 L0 220 L220 150 L430 230 L640 140 L860 240 L1080 170 L1200 220 L1200 280 Z" fill="#060816"/>
+        </svg>
+      </div>
+
+      <div class="scrim"></div>
+
+      <div class="stage-content">
+        <div class="stage-top">
+          <div class="label">正在感受</div>
+          <h3>此刻是<span class="scene-name" id="sceneTitle">林间夜色</span></h3>
+          <p id="sceneDesc">高大的树影、远处的虫鸣与微风，把白天的紧绷一点点松开。</p>
+        </div>
+
+        <div class="player">
+          <div class="picker" id="picker">
+            <button class="chip on" data-scene="forest"><span class="gl"></span>森林</button>
+            <button class="chip" data-scene="ocean"><span class="gl"></span>大海</button>
+            <button class="chip" data-scene="rain"><span class="gl"></span>雨天</button>
+            <button class="chip" data-scene="night"><span class="gl"></span>夜空</button>
+          </div>
+          <div class="controls">
+            <button class="playbtn" id="playBtn" aria-label="播放声景">
+              <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <div class="nowblock">
+              <div class="nowlabel">声景</div>
+              <div class="nowname" id="nowName">林间夜色 · 微风与虫鸣</div>
+            </div>
+            <div class="hr-chip"><span class="hr-dot"></span><span id="hrText">心率 68 · 平稳</span></div>
+          </div>
+          <div class="volrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+            <input type="range" id="vol" min="0" max="100" value="55">
+          </div>
+          <div class="audio-note">声音由浏览器实时合成 · 戴上耳机体验更佳</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec-pad" id="alarm">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="label">智能闹钟</div>
+      <h2>用一阵轻柔的震动叫醒你</h2>
+      <p>闹钟通过指环在指尖轻轻震动，不吵醒身边的人；并在你最浅的睡眠阶段附近唤醒，让醒来不再昏沉。</p>
+    </div>
+    <div class="alarmgrid">
+      <div class="card clockface reveal">
+        <svg class="ringIcon" id="ringIcon" viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="58" r="29" stroke="rgba(147,201,180,.22)" stroke-width="13"/>
+          <circle cx="50" cy="58" r="29" stroke="var(--sage)" stroke-width="5"/>
+          <path d="M37 28 L50 17 L63 28" stroke="var(--sage)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="bigtime"><input type="time" id="alarmTime" value="07:00"></div>
+        <div class="clocksub" id="alarmSub">将在浅睡窗口 06:50–07:00 之间唤醒你</div>
+        <div style="margin-top:24px"><button class="btn" id="previewWake"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 1M9 3h6M5 6 7 4M19 6l-2-2"/></svg>模拟唤醒</button></div>
+      </div>
+      <div class="card reveal">
+        <div class="label" style="margin-bottom:12px">唤醒方式</div>
+        <div class="tgrow"><div class="k">指环震动唤醒<small>渐强的轻柔震动，只有你能感觉到</small></div><div class="tg on" data-tg="vibrate"></div></div>
+        <div class="tgrow"><div class="k">智能浅睡唤醒<small>设定时间前 10 分钟内择机唤醒</small></div><div class="tg on" data-tg="smart"></div></div>
+        <div class="tgrow"><div class="k">渐亮模拟日出<small>联动卧室智能灯，提前 15 分钟渐亮</small></div><div class="tg" data-tg="light"></div></div>
+        <div class="tgrow"><div class="k">唤醒后轻音乐<small>醒来时缓缓淡入晨光声景</small></div><div class="tg on" data-tg="wakemusic"></div></div>
+      </div>
+    </div>
+
+    <div class="card reveal" style="margin-top:22px">
+      <div class="label" style="margin-bottom:6px">晨间提醒</div>
+      <h3 style="font-size:21px;font-weight:300;margin-bottom:6px">醒来第一眼，想起今天最重要的事</h3>
+      <p style="color:var(--haze);font-size:14px;margin-bottom:18px">闹响后，指环会把这些提醒推送到你的手机锁屏。</p>
+      <ul class="remlist" id="remList"></ul>
+      <div class="reminput">
+        <input id="remInput" type="text" placeholder="添加一条，例如：今天 10 点开会，记得带打印的文件">
+        <button class="addbtn" id="remAdd" aria-label="添加提醒">+</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec-pad" id="library">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="label">为你今晚精选</div>
+      <h2>内容不是消遣，是可度量的处方</h2>
+      <p>每一段冥想、故事与 ASMR 都因你的睡眠指纹而推荐，并由指环验证真实效果。</p>
+    </div>
+    <div class="grid">
+      <div class="card lib reveal">
+        <div class="top">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21c4-9 9-12 18-13-1 9-4 14-13 14a8 8 0 0 1-5-1z"/><path d="M9 18c1-4 3-6 7-7"/></svg></span>
+          <span class="tag ai">AIGC 生成</span>
+        </div>
+        <h4>睡前冥想 · 释放紧张</h4>
+        <p class="d">为你今天的高压日定制的引导词，真人音色轻声陪伴。</p>
+        <div class="eff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/></svg>上次 深睡 +12 分钟</div>
+      </div>
+      <div class="card lib reveal">
+        <div class="top">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14a4 4 0 0 1 8 0M12 14a4 4 0 0 1 8 0"/><path d="M2 14q5-8 10 0 5 8 10 0"/></svg></span>
+          <span class="tag">生物反馈</span>
+        </div>
+        <h4>自适应音景 · 雨夜</h4>
+        <p class="d">随你的心率实时变缓、淡出，入睡前自动收尾。</p>
+        <div class="eff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/></svg>平均入睡快 8 分钟</div>
+      </div>
+      <div class="card lib reveal">
+        <div class="top">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4h11a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M6 4a2 2 0 0 0-2 2v12"/></svg></span>
+          <span class="tag ai">AIGC 生成</span>
+        </div>
+        <h4>睡前故事 · 雪国旅途</h4>
+        <p class="d">为你生成、可续讲的舒缓叙事，睡着自动停下。</p>
+        <div class="eff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/></svg>14 分钟内入睡</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec-pad" id="sleep">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="label">睡眠记录</div>
+      <h2>看懂为什么，而不只是分数</h2>
+      <p>SleepMind 把夜里的生理信号和白天的行为连起来，告诉你真正影响睡眠的那个原因。</p>
+    </div>
+    <div class="sleepgrid">
+      <div class="card reveal">
+        <div class="label" style="margin-bottom:6px">昨夜结构</div>
+        <h3 style="font-size:22px;font-weight:300">7 小时 12 分 · 安睡</h3>
+        <div class="stagebar">
+          <div class="seg" style="height:40%;background:#7b8cd2"></div>
+          <div class="seg" style="height:64%;background:#7b8cd2"></div>
+          <div class="seg" style="height:95%;background:#5fae93"></div>
+          <div class="seg" style="height:80%;background:#5fae93"></div>
+          <div class="seg" style="height:50%;background:#7b8cd2"></div>
+          <div class="seg" style="height:30%;background:#c9b07b"></div>
+          <div class="seg" style="height:72%;background:#5fae93"></div>
+          <div class="seg" style="height:46%;background:#7b8cd2"></div>
+          <div class="seg" style="height:24%;background:#c9b07b"></div>
+          <div class="seg" style="height:58%;background:#7b8cd2"></div>
+        </div>
+        <div class="stagelegend">
+          <span><i style="background:#5fae93"></i>深睡 1h 48m</span>
+          <span><i style="background:#7b8cd2"></i>浅睡 3h 30m</span>
+          <span><i style="background:#c9b07b"></i>快速眼动 1h 24m</span>
+        </div>
+      </div>
+      <div class="card fingerprint reveal">
+        <div class="label" style="margin-bottom:14px">你的睡眠指纹 · 本周</div>
+        <div class="row"><span class="k">咖啡因截止时间</span><span class="v bad">偏晚 · 14:00 后影响明显</span></div>
+        <div class="row"><span class="k">最有效的助眠声景</span><span class="v good">雨天 · 入睡快 8 分钟</span></div>
+        <div class="row"><span class="k">压力对深睡的影响</span><span class="k v">高 · 建议傍晚散步</span></div>
+        <div class="row"><span class="k">规律就寝坚持度</span><span class="v good">5 / 7 晚</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec-pad" id="week">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="label">过去一周</div>
+      <h2>你正在慢慢睡得更好</h2>
+      <p>指环整夜记录，SleepMind 把七天连成一条趋势 —— 不只是数字，而是看得见的进步。</p>
+    </div>
+
+    <div class="card reveal">
+      <div class="label" style="margin-bottom:4px">每晚睡眠时长 · 由指环整夜监测</div>
+      <div class="weekchart" id="weekChart"></div>
+      <div class="metrics">
+        <div class="metric"><div class="ml">平均睡眠</div><div class="mv">7h08m</div><div class="md up">▲ 22 分 vs 上周</div></div>
+        <div class="metric"><div class="ml">平均深睡</div><div class="mv">1h41m</div><div class="md up">▲ 14%</div></div>
+        <div class="metric"><div class="ml">平均就绪度</div><div class="mv">73</div><div class="md up">▲ 6 分</div></div>
+        <div class="metric"><div class="ml">就寝规律性</div><div class="mv">5/7</div><div class="md down">▼ 周末偏晚</div></div>
+      </div>
+      <div class="summary">
+        <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/></svg></span>
+        <p>本周比上周平均多睡 22 分钟，深睡明显提升。主要变化：有 4 晚把咖啡提前到了 14:00 前，深睡随之变长。继续保持这一条，下周就绪度有望破 80。</p>
+      </div>
+    </div>
+
+    <div class="card peer reveal" style="margin-top:22px">
+      <div class="label" style="margin-bottom:6px">同龄人对比</div>
+      <h3 style="font-size:21px;font-weight:300;margin-bottom:4px">和你相似的人，睡得怎么样</h3>
+      <p style="color:var(--haze);font-size:13px;margin-bottom:8px">匿名对照 25–34 岁、作息相近的人群（白线为他们的平均水平）。</p>
+      <div class="prow">
+        <div class="plabel"><span>睡眠时长</span><span class="rank">超过 68% 同龄人</span></div>
+        <div class="ptrack"><div class="pfill" style="width:68%"></div><div class="pavg" style="left:54%"></div></div>
+        <div class="pnote">你 7h08m · 同龄人平均 6h41m</div>
+      </div>
+      <div class="prow">
+        <div class="plabel"><span>深睡比例</span><span class="rank">超过 72% 同龄人</span></div>
+        <div class="ptrack"><div class="pfill" style="width:72%"></div><div class="pavg" style="left:50%"></div></div>
+        <div class="pnote">你 23% · 同龄人平均 19%</div>
+      </div>
+      <div class="prow">
+        <div class="plabel"><span>入睡速度</span><span class="rank">中等偏上</span></div>
+        <div class="ptrack"><div class="pfill" style="width:58%"></div><div class="pavg" style="left:52%"></div></div>
+        <div class="pnote">你 16 分钟 · 同龄人平均 18 分钟</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec-pad" id="community">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="label">睡不着互助站</div>
+      <h2>今晚睡不着的，不止你一个</h2>
+      <p>把此刻的辗转写下来，或留下一个帮到过你的小方法 —— 匿名，温柔，互相陪伴。</p>
+    </div>
+
+    <div class="compost reveal">
+      <textarea id="postText" placeholder="此刻在想什么？或者，分享一个你的助眠小经验……"></textarea>
+      <div class="pf">
+        <div class="tags">
+          <span class="ptag on" data-pt="talk">倾诉</span>
+          <span class="ptag" data-pt="tip">经验分享</span>
+        </div>
+        <button class="btn" id="postBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12l16-7-7 16-2-7z"/></svg>匿名发布</button>
+      </div>
+    </div>
+
+    <div class="msgs reveal" id="msgs"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="tag2">愿你今晚，睡得比昨晚更好一点。</div>
+  <div class="fbrand">SleepMind</div>
+  <p>课程大作业演示 · AI 智能硬件产品创意与设计 · 声音与画面均为本机实时生成</p>
+</footer>
+
+<script>
+/* ---------- nav scroll ---------- */
+const nav=document.getElementById('nav');
+addEventListener('scroll',()=>{nav.classList.toggle('scrolled',scrollY>40)});
+
+/* ---------- reveal on scroll ---------- */
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.16});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ---------- hero starfield ---------- */
+(function(){
+  const c=document.getElementById('stars-hero'),x=c.getContext('2d');
+  let stars=[];
+  function size(){c.width=innerWidth;c.height=c.parentElement.offsetHeight;build()}
+  function build(){stars=[];const n=Math.min(140,Math.round(innerWidth/9));for(let i=0;i<n;i++){stars.push({x:Math.random()*c.width,y:Math.random()*c.height*.85,r:Math.random()*1.3+.2,a:Math.random(),s:Math.random()*.02+.004})}}
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function draw(){x.clearRect(0,0,c.width,c.height);for(const st of stars){if(!reduce){st.a+=st.s;if(st.a>1||st.a<.1)st.s*=-1}x.globalAlpha=Math.max(.1,Math.min(1,st.a))*.9;x.beginPath();x.arc(st.x,st.y,st.r,0,7);x.fillStyle='#eef0ff';x.fill()}x.globalAlpha=1;if(!reduce)requestAnimationFrame(draw)}
+  addEventListener('resize',size);size();draw();
+})();
+
+/* ---------- scene particles ---------- */
+function fillParticles(){
+  document.querySelectorAll('.particles').forEach(p=>{
+    const fx=p.dataset.fx;p.innerHTML='';
+    if(fx==='firefly'){for(let i=0;i<16;i++){const d=document.createElement('div');d.className='firefly';const x=Math.random()*100,y=40+Math.random()*55;d.style.left=x+'%';d.style.top=y+'%';const dur=(6+Math.random()*8).toFixed(1);d.style.animation=`ff${i} ${dur}s ease-in-out ${(Math.random()*4).toFixed(1)}s infinite`;mkKey(`ff${i}`,`0%,100%{opacity:0;transform:translate(0,0)}30%{opacity:.9}50%{opacity:1;transform:translate(${(Math.random()*40-20)|0}px,${(-20-Math.random()*30)|0}px)}80%{opacity:.4}`);p.appendChild(d)}}
+    else if(fx==='rain'){for(let i=0;i<70;i++){const d=document.createElement('div');d.className='raindrop';d.style.left=Math.random()*100+'%';d.style.height=(14+Math.random()*22)+'px';const dur=(.5+Math.random()*.5).toFixed(2);d.style.animation=`rainfall ${dur}s linear ${(Math.random()).toFixed(2)}s infinite`;d.style.opacity=(.3+Math.random()*.5).toFixed(2);p.appendChild(d)}}
+    else if(fx==='twinkle'){for(let i=0;i<90;i++){const d=document.createElement('div');d.className='twinkle';const s=(Math.random()*1.6+.4).toFixed(1);d.style.width=s+'px';d.style.height=s+'px';d.style.left=Math.random()*100+'%';d.style.top=Math.random()*70+'%';d.style.opacity=(.2+Math.random()*.8).toFixed(2);const dur=(2+Math.random()*4).toFixed(1);d.style.animation=`tw ${dur}s ease-in-out ${(Math.random()*3).toFixed(1)}s infinite`;p.appendChild(d)}}
+  });
+}
+const styleEl=document.createElement('style');document.head.appendChild(styleEl);
+function mkKey(name,body){styleEl.sheet.insertRule(`@keyframes ${name}{${body}}`,styleEl.sheet.cssRules.length)}
+mkKey('rainfall','0%{transform:translateY(0)}100%{transform:translateY(820px)}');
+mkKey('tw','0%,100%{opacity:.15}50%{opacity:1}');
+fillParticles();
+
+/* ---------- scene meta ---------- */
+const META={
+  forest:{title:'林间夜色',desc:'高大的树影、远处的虫鸣与微风，把白天的紧绷一点点松开。',now:'林间夜色 · 微风与虫鸣'},
+  ocean:{title:'静海月光',desc:'缓慢起伏的海浪，月光铺成一条小路，呼吸跟着潮汐慢下来。',now:'静海月光 · 缓潮起伏'},
+  rain:{title:'窗外雨夜',desc:'连绵的雨声落在屋檐，世界被温柔地遮住，只剩这一方安静。',now:'窗外雨夜 · 连绵细雨'},
+  night:{title:'高原星空',desc:'远山轮廓与满天星子，空气清冷，思绪一颗颗安静地落下。',now:'高原星空 · 低语夜风'}
+};
+
+/* ---------- audio engine ---------- */
+let actx=null,master=null,noiseBuf=null,current=null,chirpTimer=null,playing=false,activeScene='forest';
+const volEl=document.getElementById('vol');
+
+function ensureCtx(){
+  if(actx)return;
+  actx=new (window.AudioContext||window.webkitAudioContext)();
+  master=actx.createGain();master.gain.value=parseFloat(volEl.value)/100;master.connect(actx.destination);
+  const n=actx.sampleRate*2,b=actx.createBuffer(1,n,actx.sampleRate),d=b.getChannelData(0);let last=0;
+  for(let i=0;i<n;i++){const w=Math.random()*2-1;last=(last+0.018*w)/1.018;d[i]=last*3.4}
+  noiseBuf=b;
+}
+function noiseSource(){const s=actx.createBufferSource();s.buffer=noiseBuf;s.loop=true;return s}
+
+function startScene(name){
+  stopScene();ensureCtx();
+  const out=actx.createGain();out.gain.value=0;out.connect(master);
+  const extra=[];const t=actx.currentTime;
+  if(name==='rain'){
+    const s=noiseSource();const hp=actx.createBiquadFilter();hp.type='highpass';hp.frequency.value=800;
+    const bp=actx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3200;bp.Q.value=.5;
+    const g=actx.createGain();g.gain.value=.8;s.connect(hp);hp.connect(bp);bp.connect(g);g.connect(out);s.start();
+    const lfo=actx.createOscillator();lfo.frequency.value=.35;const lg=actx.createGain();lg.gain.value=1400;lfo.connect(lg);lg.connect(bp.frequency);lfo.start();
+    extra.push(s,lfo);
+  }else if(name==='ocean'){
+    const s=noiseSource();const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=520;
+    const g=actx.createGain();g.gain.value=.45;s.connect(lp);lp.connect(g);g.connect(out);s.start();
+    const lfo=actx.createOscillator();lfo.type='sine';lfo.frequency.value=.11;const lg=actx.createGain();lg.gain.value=.32;lfo.connect(lg);lg.connect(g.gain);lfo.start();
+    extra.push(s,lfo);
+  }else if(name==='forest'){
+    const s=noiseSource();const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=440;
+    const g=actx.createGain();g.gain.value=.3;s.connect(lp);lp.connect(g);g.connect(out);s.start();
+    const lfo=actx.createOscillator();lfo.frequency.value=.08;const lg=actx.createGain();lg.gain.value=.14;lfo.connect(lg);lg.connect(g.gain);lfo.start();
+    chirpTimer=setInterval(()=>{if(playing&&Math.random()<.55)chirp(out)},2600);
+    extra.push(s,lfo);
+  }else{
+    const s=noiseSource();const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=320;
+    const g=actx.createGain();g.gain.value=.18;s.connect(lp);lp.connect(g);g.connect(out);s.start();
+    const o1=actx.createOscillator();o1.frequency.value=68;const o2=actx.createOscillator();o2.frequency.value=68.5;
+    const pg=actx.createGain();pg.gain.value=.05;o1.connect(pg);o2.connect(pg);pg.connect(out);o1.start();o2.start();
+    chirpTimer=setInterval(()=>{if(playing&&Math.random()<.5)cricket(out)},2000);
+    extra.push(s,o1,o2);
+  }
+  out.gain.linearRampToValueAtTime(1,t+1.3);
+  current={out,extra};
+}
+function chirp(out){const o=actx.createOscillator();o.type='sine';const g=actx.createGain();const t=actx.currentTime;const f=1700+Math.random()*1500;o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*1.45,t+.08);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.045,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.2);o.connect(g);g.connect(out);o.start(t);o.stop(t+.22)}
+function cricket(out){const o=actx.createOscillator();o.type='triangle';const g=actx.createGain();const t=actx.currentTime;o.frequency.value=2700;g.gain.setValueAtTime(0,t);for(let i=0;i<5;i++){g.gain.setValueAtTime(.025,t+i*.045);g.gain.setValueAtTime(0,t+i*.045+.022)}o.connect(g);g.connect(out);o.start(t);o.stop(t+.3)}
+function stopScene(){
+  if(chirpTimer){clearInterval(chirpTimer);chirpTimer=null}
+  if(current){const c=current;try{c.out.gain.cancelScheduledValues(actx.currentTime);c.out.gain.setTargetAtTime(0,actx.currentTime,.3)}catch(e){}setTimeout(()=>{c.extra.forEach(n=>{try{n.stop()}catch(e){}});try{c.out.disconnect()}catch(e){}},800);current=null}
+}
+
+/* ---------- play / pause ---------- */
+const playBtn=document.getElementById('playBtn'),playIcon=document.getElementById('playIcon');
+function setPlayIcon(){playIcon.innerHTML=playing?'<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>':'<path d="M8 5v14l11-7z"/>'}
+function play(){ensureCtx();if(actx.state==='suspended')actx.resume();playing=true;startScene(activeScene);setPlayIcon();startHR()}
+function pause(){playing=false;stopScene();setPlayIcon();stopHR()}
+playBtn.addEventListener('click',()=>playing?pause():play());
+volEl.addEventListener('input',()=>{if(master)master.gain.setTargetAtTime(parseFloat(volEl.value)/100,actx.currentTime,.05)});
+
+/* ---------- scene switch ---------- */
+const scenes=document.querySelectorAll('.scene'),chips=document.querySelectorAll('.chip');
+const sceneTitle=document.getElementById('sceneTitle'),sceneDesc=document.getElementById('sceneDesc'),nowName=document.getElementById('nowName');
+function selectScene(name){
+  activeScene=name;
+  scenes.forEach(s=>s.classList.toggle('on',s.dataset.scene===name));
+  chips.forEach(c=>c.classList.toggle('on',c.dataset.scene===name));
+  const m=META[name];sceneTitle.textContent=m.title;sceneDesc.textContent=m.desc;nowName.textContent=m.now;
+  if(playing)startScene(name);
+}
+chips.forEach(c=>c.addEventListener('click',()=>selectScene(c.dataset.scene)));
+
+/* ---------- biofeedback sim ---------- */
+let hrTimer=null,hr=68;const hrText=document.getElementById('hrText');
+function startHR(){hr=68;hrText.textContent='心率 68 · 平稳';clearInterval(hrTimer);hrTimer=setInterval(()=>{if(hr>56)hr-=Math.random()<.6?1:0;hrText.textContent=`心率 ${hr} · ${hr>62?'平稳':'下降中'}`},2200)}
+function stopHR(){clearInterval(hrTimer);hrTimer=null;hrText.textContent='心率 68 · 平稳'}
+
+/* ---------- toast ---------- */
+let toastEl=null,toastT=null;
+function toast(msg,buzz){
+  if(!toastEl){toastEl=document.createElement('div');toastEl.className='toast';document.body.appendChild(toastEl)}
+  toastEl.innerHTML=(buzz?'<span class="rdot"></span>':'')+msg;
+  toastEl.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),2800);
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ---------- toggles ---------- */
+document.querySelectorAll('.tg').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+
+/* ---------- alarm ---------- */
+const alarmTime=document.getElementById('alarmTime'),alarmSub=document.getElementById('alarmSub');
+const smartTg=document.querySelector('.tg[data-tg=smart]'),vibTg=document.querySelector('.tg[data-tg=vibrate]'),wakeTg=document.querySelector('.tg[data-tg=wakemusic]');
+function updAlarmSub(){
+  const v=alarmTime.value||'07:00';const [h,m]=v.split(':').map(Number);const p=n=>String(n).padStart(2,'0');
+  if(smartTg.classList.contains('on')){let sm=m-10,sh=h;if(sm<0){sm+=60;sh=(h+23)%24}alarmSub.textContent=`将在浅睡窗口 ${p(sh)}:${p(sm)}–${v} 之间唤醒你`}
+  else{alarmSub.textContent=`将在 ${v} 准时唤醒你`}
+}
+alarmTime.addEventListener('input',updAlarmSub);
+smartTg.addEventListener('click',updAlarmSub);
+updAlarmSub();
+
+const ringIcon=document.getElementById('ringIcon');
+document.getElementById('previewWake').addEventListener('click',()=>{
+  const vib=vibTg.classList.contains('on');
+  if(vib){ringIcon.classList.remove('buzz');void ringIcon.offsetWidth;ringIcon.classList.add('buzz');if(navigator.vibrate)navigator.vibrate([120,80,120,80,220])}
+  toast(vib?'早安 · 指环正在轻轻震动唤醒你':'早安 · 闹钟已响起',vib);
+  if(wakeTg.classList.contains('on'))playWake();
+});
+function playWake(){ensureCtx();if(actx.state==='suspended')actx.resume();const t=actx.currentTime;[523.25,659.25,783.99].forEach((f,i)=>{const o=actx.createOscillator();o.type='sine';const g=actx.createGain();o.frequency.value=f;const st=t+i*.5;g.gain.setValueAtTime(0,st);g.gain.linearRampToValueAtTime(.12,st+.18);g.gain.exponentialRampToValueAtTime(.0001,st+1.7);o.connect(g);g.connect(master);o.start(st);o.stop(st+1.8)})}
+
+/* ---------- morning reminders ---------- */
+let reminders=['今天 10:00 项目评审，记得带打印好的文件','出门前喝一杯温水','晒 10 分钟晨光，帮生物钟回正'];
+const remList=document.getElementById('remList'),remInput=document.getElementById('remInput');
+function renderRem(){
+  remList.innerHTML='';
+  reminders.forEach((r,i)=>{
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l5 5L20 6"/></svg></span><span class="txt">${esc(r)}</span><button class="del" aria-label="删除">×</button>`;
+    li.querySelector('.ck').addEventListener('click',()=>li.classList.toggle('done'));
+    li.querySelector('.del').addEventListener('click',()=>{reminders.splice(i,1);renderRem()});
+    remList.appendChild(li);
+  });
+}
+function addRem(){const v=remInput.value.trim();if(!v)return;reminders.push(v);remInput.value='';renderRem()}
+document.getElementById('remAdd').addEventListener('click',addRem);
+remInput.addEventListener('keydown',e=>{if(e.key==='Enter')addRem()});
+renderRem();
+
+/* ---------- week chart ---------- */
+const weekData=[{d:'一',h:6.6},{d:'二',h:7.1},{d:'三',h:6.9},{d:'四',h:7.4},{d:'五',h:6.3},{d:'六',h:7.8},{d:'日',h:7.5}];
+const weekChart=document.getElementById('weekChart'),maxH=8.5;
+weekData.forEach(w=>{const col=document.createElement('div');col.className='col';const hh=Math.floor(w.h),mm=Math.round((w.h-hh)*60);col.innerHTML=`<span class="hh">${hh}h${String(mm).padStart(2,'0')}</span><div class="bar" style="height:0"></div><span class="dy">${w.d}</span>`;weekChart.appendChild(col)});
+const wkIO=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){weekChart.querySelectorAll('.bar').forEach((b,i)=>setTimeout(()=>b.style.height=(weekData[i].h/maxH*100)+'%',i*90));wkIO.disconnect()}})},{threshold:.3});
+wkIO.observe(weekChart);
+
+/* ---------- community ---------- */
+let postTag='talk';
+document.querySelectorAll('.ptag').forEach(p=>p.addEventListener('click',()=>{document.querySelectorAll('.ptag').forEach(x=>x.classList.remove('on'));p.classList.add('on');postTag=p.dataset.pt}));
+let msgs=[
+  {who:'夜航的猫',tag:'tip',meta:'25–34岁 · 互助经验',body:'我也常在凌晨两点醒。后来固定做 4-7-8 呼吸：吸气4秒、屏息7秒、呼气8秒，做五轮，配着雨声，基本都能再睡回去。',likes:42},
+  {who:'晚八点的月亮',tag:'talk',meta:'新手妈妈 · 此刻',body:'宝宝刚睡，我却怎么也睡不着，脑子里全是明天的事。看到这里有人陪着，好像好一点了。',likes:18},
+  {who:'K',tag:'tip',meta:'轮班护士 · 互助经验',body:'上夜班的姐妹，回家别立刻睡。戴墨镜挡晨光、洗个温水澡、把房间弄到全黑，指环数据显示我入睡能快十几分钟。',likes:67},
+  {who:'安',tag:'talk',meta:'考研中 · 此刻',body:'越想睡越清醒，心跳还很快。已经打开森林声景，希望今晚能睡够六小时。',likes:9}
+];
+const msgsEl=document.getElementById('msgs');
+function renderMsgs(){
+  msgsEl.innerHTML='';
+  msgs.forEach((m)=>{
+    const d=document.createElement('div');d.className='msg';
+    d.innerHTML=`<div class="mh"><div class="av">${esc(m.who[0])}</div><div><div class="who">${esc(m.who)}</div><div class="meta">${esc(m.meta)}</div></div><span class="chiptag ${m.tag==='tip'?'tip':'talk'}">${m.tag==='tip'?'经验':'倾诉'}</span></div><div class="body">${esc(m.body)}</div><div class="foot"><button class="likebtn${m.liked?' liked':''}"><svg viewBox="0 0 24 24" fill="${m.liked?'currentColor':'none'}" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>有用 ${m.likes}</button></div>`;
+    d.querySelector('.likebtn').addEventListener('click',()=>{m.liked=!m.liked;m.likes+=m.liked?1:-1;renderMsgs()});
+    msgsEl.appendChild(d);
+  });
+}
+function post(){const ta=document.getElementById('postText');const v=ta.value.trim();if(!v)return;msgs.unshift({who:'你',tag:postTag,meta:'刚刚',body:v,likes:0});ta.value='';renderMsgs();toast('已匿名发布 · 谢谢你的分享')}
+document.getElementById('postBtn').addEventListener('click',post);
+renderMsgs();
+</script>
+</body>
+</html>
